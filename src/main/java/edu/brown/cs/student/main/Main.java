@@ -1,11 +1,10 @@
 package edu.brown.cs.student.main;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
@@ -24,6 +23,7 @@ import spark.template.freemarker.FreeMarkerEngine;
 /**
  * The Main class of our project. This is where execution begins.
  */
+
 public final class Main {
 
   // use port 4567 by default when running server
@@ -60,7 +60,6 @@ public final class Main {
       runSparkServer((int) options.valueOf("port"));
     }
 
-
     // TODO: Add your REPL here!
     try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
       String input;
@@ -71,6 +70,78 @@ public final class Main {
           System.out.println(arguments[0]);
           // TODO: complete your REPL by adding commands for addition "add" and subtraction
           //  "subtract"
+          MathBot mathBot = new MathBot();
+          ArrayList<String[]> stars = new ArrayList<String[]>();
+          if (arguments[0].equals("add")) {
+            System.out.println(mathBot.add(Double.parseDouble(arguments[1]), Double.parseDouble(arguments[2])));
+          }
+          else if (arguments[0].equals("subtract")) {
+            System.out.println(mathBot.subtract(Double.parseDouble(arguments[1]), Double.parseDouble(arguments[2])));
+          }
+          else if (arguments[0].equals("stars")) {
+            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(arguments[1]))) {
+              String csvInput;
+              while ((csvInput = bufferedReader.readLine()) != null) {
+                try {
+                  csvInput.trim();
+                  String[] csvArguments = csvInput.split(",");
+                  stars.add(csvArguments);
+                  stars.remove(0);
+                }
+                catch (Exception e) {
+                  // e. printStackTrace();
+                  System.out.println("ERROR: We couldn't process your input");
+                }
+              }
+            }
+          }
+          else if (arguments[0].equals("naive_neighbors")) {
+            if (arguments.length == 5) {
+              ArrayList<idDistancePair> idDistancePairList = new ArrayList<idDistancePair>();
+              for (String[] array : stars) {
+                Double dist = Math.sqrt(Math.pow((Double.parseDouble(array[2]) - Double.parseDouble(arguments[2])),
+                        2) + Math.pow((Double.parseDouble(array[3]) - Double.parseDouble(arguments[3])), 2) +
+                        Math.pow((Double.parseDouble(array[4]) - Double.parseDouble(arguments[4])), 2));
+                idDistancePair pair = new idDistancePair(array[0], dist);
+                idDistancePairList.add(pair);
+              }
+              idDistancePairList.sort(Comparator.comparing(idDistancePair -> idDistancePair.distance));
+              for (int i = 0; i < Integer.parseInt(arguments[1]); i++) {
+                System.out.println(idDistancePairList.get(i).id);
+              }
+            }
+            else if (arguments.length == 3) {
+              ArrayList<idDistancePair> idDistancePairList = new ArrayList<idDistancePair>();
+              String x = null;
+              String y = null;
+              String z = null;
+              for (String[] array : stars) {
+                if (array[1].equals(arguments[1])) {
+                  x = array[2];
+                  y = array[3];
+                  z = array[4];
+                  break;
+                }
+                else {
+                  continue;
+                }
+              }
+              for (String[] array : stars) {
+                Double dist = Math.sqrt(Math.pow(Double.parseDouble(x) - Double.parseDouble(array[2]), 2) +
+                        Math.pow(Double.parseDouble(y) - Double.parseDouble(array[3]), 2) +
+                        Math.pow(Double.parseDouble(z) - Double.parseDouble(array[4]), 2));
+                idDistancePair pair = new idDistancePair(array[0], dist);
+                idDistancePairList.add(pair);
+              }
+              idDistancePairList.sort(Comparator.comparing(idDistancePair -> idDistancePair.distance));
+              for (int i = 0; i < Integer.parseInt(arguments[1]); i++) {
+                System.out.println(idDistancePairList.get(i).id);
+              }
+            }
+            else {
+              System.out.println("Incorrect number of arguments");
+            }
+          }
         } catch (Exception e) {
           // e.printStackTrace();
           System.out.println("ERROR: We couldn't process your input");
@@ -80,7 +151,6 @@ public final class Main {
       e.printStackTrace();
       System.out.println("ERROR: Invalid input for REPL");
     }
-
   }
 
   private static FreeMarkerEngine createEngine() {
